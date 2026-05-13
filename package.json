@@ -1,0 +1,24 @@
+{
+  "name": "shqella-backend-api",
+  "version": "1.0.0",
+  "description": "a backend for shqella app a shopping app with prizes",
+  "license": "MIT",
+  "author": "samuel",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx nodemon index.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "postgres": "^3.4.9",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
