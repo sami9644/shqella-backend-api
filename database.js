@@ -318,4 +318,25 @@ if (sql) await sql.end();
 }
 
 
-module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder}
+async function searchCategory(category) {
+    let sql;
+    try {
+        sql = postgres(connectionString);
+        let items = await sql`SELECT * FROM items WHERE item_type = ${category}`
+        if (items.length > 0) {
+            return items;
+        }
+        else {
+            return false
+        }
+    }
+     catch (err) {
+        console.error(err);
+        return false;
+    }
+    finally {
+if (sql) await sql.end();
+}
+}
+
+module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory}

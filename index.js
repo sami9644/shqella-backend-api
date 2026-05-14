@@ -9,6 +9,10 @@ app = express();
 app.use(express.json());
 app.use(cors());
 
+app.get("/",(req,res) => {
+    res.send("<h1>Backend api is running </h1>");
+})
+
 
 // login user 
 app.post("/api/login",async (req,res) => {
@@ -152,6 +156,28 @@ app.delete("/cancel/order/:orderid/:userid",async (req,res) => {
         res.json({
             status:"Error",
             message:"Error occured"
+        })
+    }
+});
+
+
+//search by category
+app.get("/search/:category",async (req,res) => {
+    let items = await db.searchCategory(req.params.category);
+    if (items) {
+        console.log("hello")
+        res.json({
+            status:"Success",
+            message:`${items.length} items returned`,
+            data:items
+        })
+    }
+    else {
+        console.log("Nope")
+        res.status(404).json({
+             status:"error",
+            message:`No items found!`,
+            data:null
         })
     }
 })
