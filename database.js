@@ -6,6 +6,48 @@ const bcrypt = require('bcrypt');
 
 const connectionString = process.env.DATABASE_URL;
 
+const checkAccount = async (phone) => {
+let sql;
+try {
+    sql = postgres(connectionString);
+    let userInfo = await sql`SELECT phone_number FROM users WHERE phone_number = ${phone}`;
+    return userInfo.length > 0;
+}
+catch (error) {
+    console.log(error);
+    return false;
+}
+finally {
+    await sql.end();
+}
+}
+
+// Database function
+const insertUser = async (name, phoneNo, gender, password) => {
+    let sql;
+    try {
+        sql = postgres(connectionString);
+        const hashed = await bcrypt.hash(password, 10);
+        // if (!checkAccount(phoneNo)) {
+        const users = await sql`
+            insert into users 
+                (fullname, phone_number, gender, password)
+            values 
+                (${name}, ${phoneNo}, ${gender}, ${hashed})
+            returning id, fullname, phone_number,gender,password
+        `;
+        return users[0];
+        // }
+        // else {
+        //     return false
+        // }
+    } catch (err) {
+        console.error("DB Error:", err);
+        return null;
+    } finally {
+        if (sql) await sql.end();
+    }
+};
 
 
 
@@ -305,10 +347,13 @@ async function cancelPendingOrder(orderid,userid) {
          let sql;
     try {
         sql = postgres(connectionString);
-        await sql`DELETE FROM orders WHERE order_id = ${orderid} AND paid_status = FALSE AND ordered_by = ${userid}`;
+        let [deletedAmount] = await sql`DELETE FROM orders WHERE order_id = ${orderid} AND paid_status = FALSE AND ordered_by = ${userid} returning item,amount`;
+        await sql`UPDATE items SET amount = amount + ${deletedAmount.amount} WHERE id = ${deletedAmount.item}`
+        console.log("item added");
         return true;
     }
     catch (err) {
+        console.log("damn")
         console.error(err);
         return false;
     }
@@ -339,4 +384,4 @@ if (sql) await sql.end();
 }
 }
 
-module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory}
+module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory,insertUser}

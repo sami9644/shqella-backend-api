@@ -13,6 +13,26 @@ app.get("/",(req,res) => {
     res.send("<h1>Backend api is running </h1>");
 })
 
+app.post("/api/signup",async (req,res) => {
+    const {fullname, phoneNo, gender, password} = req.body;
+    const userInfo = await db.insertUser(fullname,phoneNo,gender,password);
+    if (userInfo) {
+        res.status(200).json({
+            status:"Success",
+            message:"Registered successfully",
+            data:userInfo
+        })
+    }
+    else {
+
+        res.status(404).json({
+            status:"Error",
+            message:"Error registering make sure you arent using already used phone number",
+            data:null
+        })
+
+    }
+})
 
 // login user 
 app.post("/api/login",async (req,res) => {
@@ -147,12 +167,14 @@ else {
 app.delete("/cancel/order/:orderid/:userid",async (req,res) => {
    let cancel = await db.cancelPendingOrder(req.params.orderid,req.params.userid);
     if (cancel) {
+        console.log("111")
         res.json({
             status:"Success",
             message:'Cancelled'
         })
     }
     else {
+        console.log("000")
         res.json({
             status:"Error",
             message:"Error occured"
