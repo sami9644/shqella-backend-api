@@ -202,6 +202,25 @@ app.get("/search/:category",async (req,res) => {
             data:null
         })
     }
+});
+
+app.post("/redeem/coin",async (req,res) => {
+    let {phone,password,coin} = req.body;
+    let fullname = await db.redeemCoin(phone,password,coin)
+    if (fullname) {
+        return res.json({
+            status:"Success",
+            data:fullname,
+            message:`Coin have been added to ${fullname}`
+        })
+    }
+    else {
+        return res.status(404).json({
+            status:"error",
+            data:null,
+            message:`An error occured!`
+        })
+    }
 })
 
 const PORT = 3000;

@@ -1,21 +1,9 @@
 import requests
-def reguser():
+def redeem_coin():
     payload = {
-        "fullName":"sami",
-        "email":"ethio@gmail.com",
-        "gender":"male",
-        "birthdate":"2000-12-15",
-        "password":"12345"
+        "phone":"0949987315",
+        "password":"1234",
+        "coin":"12"
     }
-    res = requests.post(url='http://localhost:3000/api/register/user',json=payload)
-    print(res)
-
-def login():
-    payload = {
-        'email':"ethio@gmail.com",
-        'password':"12345"
-    }
-    res = requests.post(url='http://localhost:3000/api/login',json=payload)
+    res = requests.post(url='http://localhost:3000/redeem/coin',json=payload)
     print(res.json())
-
-login()

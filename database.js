@@ -384,4 +384,39 @@ if (sql) await sql.end();
 }
 }
 
-module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory,insertUser}
+async function redeemCoin(phone,password,coin) {
+    let sql;
+    try {
+        sql = postgres(connectionString);
+        let users = await sql`SELECT * FROM users WHERE phone_number = ${phone}`;
+        // console.log(users)
+        if (users.length > 0) {
+            let isPasswordValid = await bcrypt.compare(password,users[0].password);
+            if (isPasswordValid) {
+            let fullname = await sql`UPDATE users SET coins = coins+${parseInt(coin)} WHERE phone_number = ${phone} returning fullname`;
+            console.log("d")
+            return true;
+            }
+            else {
+                console.log("Password invalid")
+                return false
+            }
+        }
+        else {
+            console.log("Not found!")
+            return false
+        }
+    }
+    catch(err) {
+        console.error(err);
+        return false;
+    }
+    finally {
+        if(sql) sql.end();
+    }
+    
+}
+
+
+
+module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory,insertUser,redeemCoin}
