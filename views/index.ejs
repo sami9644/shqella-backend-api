@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in and recharge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center min-vh-100">
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-center mb-4 text-primary fw-bold">Shqella Recharge</h3>
+                        
+                        <form action="/recharge" method="post">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Shqella phone</label>
+                                <input type="number" inputmode="numeric" class="form-control" name="phoneNo" required placeholder="09...">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Shqella password</label>
+                                <input type="password" class="form-control" name="password" required placeholder="••••••••">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Amount</label>
+                                <input type="number" inputmode="numeric" class="form-control" name="amount" required placeholder="e.g., 10, 20, 30">
+                                <div class="form-text text-muted mt-2 bg-warning-subtle p-2 rounded border border-warning-subtle small">
+                                    <strong>Note:</strong> Only multiples of 3 allowed! You will get 3 trials for 9 birr in shqella games.
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg" onclick="recharge()">Recharge</button>
+                            </div>
+                        </form>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

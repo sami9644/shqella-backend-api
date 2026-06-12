@@ -22,6 +22,11 @@ finally {
 }
 }
 
+function db() {
+    let sql = postgres(connectionString);
+    return sql;
+}
+
 // Database function
 const insertUser = async (name, phoneNo, gender, password) => {
     let sql;
@@ -417,6 +422,51 @@ async function redeemCoin(phone,password,coin) {
     
 }
 
+async function recharge(phoneNo, password, balance) {
+    let sql;
+    try {
+        sql = postgres(connectionString);
+        
+        // 1. Fetch user data safely
+        let users = await sql`SELECT id, password FROM users WHERE phone_number = ${phoneNo}`;
+        
+        // Postgres arrays return empty [] if nothing matches. Checking "if (userid)" on an array is always truthy!
+        if (!users || users.length === 0) {
+            throw new Error("User not found!");
+        }
+        
+        const user = users[0];
 
+        // 2. Verify password immediately before running any math
+        let checkPas = await bcrypt.compare(password, user.password);
+        if (!checkPas) {
+            throw new Error('Invalid password!');
+        }
 
-module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory,insertUser,redeemCoin}
+        // 3. FIXED LOGIC: 1 trial = 3 Birr. If balance is 10 Birr, they get 3 trials (Floor division).
+        const amount = parseFloat(balance);
+        if (isNaN(amount) || amount <= 0) {
+            throw new Error("Invalid deposit amount!");
+        }
+        
+        let trials = Math.floor(amount / 3); 
+
+        // 4. Update the database cleanly
+        await sql`UPDATE users SET balance = balance + ${amount}, trials = trials + ${trials} WHERE id = ${user.id}`;
+        
+        return true;
+    }
+    catch(err) {
+        console.error("Recharge Error:", err.message);
+        return false;
+    }
+    finally {
+        if (sql) sql.end();
+    }
+}
+// recharge('0949987315','1234','15.0')
+// .then(data => console.log(data))
+// .catch(err => console.log(err))
+// console.log(Math.floor(19)/3*3)
+
+module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory,insertUser,redeemCoin,recharge,db}
