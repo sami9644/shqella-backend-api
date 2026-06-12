@@ -87,8 +87,8 @@ app.post('/recharge', async (req, res) => {
             parseFloat(amount), 
             'ethio@gmail.com', 
             txref, 
-            `http://localhost:3000/recharge?tx_ref=${txref}`, 
-            `http://localhost:3000/recharge?tx_ref=${txref}`
+            `https://shqella-backend-api.onrender.com/recharge?tx_ref=${txref}`, 
+            `https://shqella-backend-api.onrender.com/recharge?tx_ref=${txref}`
         );
         
         return res.redirect(checkoutUrl);
