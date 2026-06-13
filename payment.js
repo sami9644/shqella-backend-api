@@ -1,7 +1,7 @@
 const axios = require('axios');
+require('dotenv').config()
 
-
-const secretKey = process.env.chapa_secret_key
+const secretKey = process.env.CHAPA_SECRET_KEY
 /**
  * Step 1: Get the checkout URL for the user
  */
