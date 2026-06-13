@@ -116,6 +116,6 @@ async function getChapaBankList() {
     }
 }
 
-getChapaBankList().then(data => console.log(data))
+// getChapaBankList().then(data => console.log(data))
 
 module.exports = {initializePayment,verifyPayment,settleToBusiness}
