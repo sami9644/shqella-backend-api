@@ -15,6 +15,16 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
+// Global middleware to check and clear expired packages on every request
+app.use(async (req, res, next) => {
+    try {
+        await db.resetAllExpiredPackages();
+    } catch (err) {
+        console.error("Expiry check middleware failed:", err.message);
+    }
+    next(); // Always call next() so the request continues processing smoothly
+});
+
 app.get("/", (req, res) => {
     return res.send("<h1>Backend api is running </h1>");
 });

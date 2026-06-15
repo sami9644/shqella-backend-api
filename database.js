@@ -556,4 +556,45 @@ async function recharge(phoneNo, password, balance) {
 // .catch(err => console.log(err))
 // console.log(Math.floor(19)/3*3)
 
-module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory,insertUser,redeemCoin,recharge,db}
+async function resetAllExpiredPackages() {
+    let sql;
+    try {
+        sql = postgres(connectionString);
+
+        // 1. Get the current reliable Ethiopian date string
+        let trueTimestamp = Date.now();
+        try {
+            let response = await fetch('https://cloudflare.com/cdn-cgi/trace');
+            let text = await response.text();
+            let tsLine = text.split('\n').find(line => line.startsWith('ts='));
+            if (tsLine) {
+                trueTimestamp = parseFloat(tsLine.split('=')[1]) * 1000;
+            }
+        } catch (e) {
+            // Fallback silently to server time if external fetch fails
+        }
+
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Africa/Addis_Ababa',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const todayStr = formatter.format(new Date(trueTimestamp)); // "YYYY-MM-DD"
+
+        // 2. Global Sweep: Update ALL users whose expiry date has arrived or passed
+        await sql`
+            UPDATE users 
+            SET balance = 0, 
+                trials = 0, 
+                expiry_date = NULL 
+            WHERE expiry_date >= ${todayStr}
+        `;
+    } catch (err) {
+        console.error("Global expiry cleanup failed:", err.message);
+    } finally {
+        if (sql) await sql.end();
+    }
+}
+
+module.exports = {login,products,addToCart,carts,createOrder,orders,deleteCart,orderFromCart,deleteExcessCart,cancelPendingOrder,searchCategory,insertUser,redeemCoin,recharge,db,resetAllExpiredPackages}
