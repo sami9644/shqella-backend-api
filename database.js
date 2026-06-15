@@ -1,8 +1,60 @@
 require('dotenv').config();
 const postgres = require('postgres');
 const bcrypt = require('bcrypt');
+const strftime = require('strftime')
 // const { use } = require('react');
+async function getRealEthiopianDates() {
+  let trueTimestamp = null;
 
+  // Try Cloudflare first (Incredibly reliable, globally distributed)
+  try {
+    let response = await fetch('https://cloudflare.com/cdn-cgi/trace');
+    let text = await response.text();
+    
+    // Cloudflare returns text data; we parse the 'ts=' line containing Unix time in seconds
+    let tsLine = text.split('\n').find(line => line.startsWith('ts='));
+    if (tsLine) {
+      trueTimestamp = parseFloat(tsLine.split('=')[1]) * 1000;
+    }
+  } catch (e) {
+    console.log("Cloudflare fetch failed, trying Google backup...");
+  }
+
+  // Backup: Fetch from Google and grab the timestamp from the server HTTP 'Date' header
+  if (!trueTimestamp) {
+    try {
+      let response = await fetch('https://www.google.com', { method: 'HEAD' });
+      let serverDateStr = response.headers.get('date');
+      if (serverDateStr) {
+        trueTimestamp = Date.parse(serverDateStr);
+      }
+    } catch (e) {
+      console.error("All time-sync APIs failed. Network might be completely down.");
+      return;
+    }
+  }
+
+  // Now process the verified timestamp safely
+  if (trueTimestamp) {
+    let today = new Date(trueTimestamp);
+
+    let expiryDate = new Date(today);
+    expiryDate.setDate(today.getDate() + 1);
+
+    // Format output specifically for the Ethiopian timezone
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Addis_Ababa',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+
+    console.log("Real Today (Ethiopia):", formatter.format(today));
+    console.log("Real Expiry (Ethiopia):", formatter.format(expiryDate));
+  }
+}
+
+// getRealEthiopianDates();
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -430,7 +482,6 @@ async function recharge(phoneNo, password, balance) {
         // 1. Fetch user data safely
         let users = await sql`SELECT id, password FROM users WHERE phone_number = ${phoneNo}`;
         
-        // Postgres arrays return empty [] if nothing matches. Checking "if (userid)" on an array is always truthy!
         if (!users || users.length === 0) {
             throw new Error("User not found!");
         }
@@ -443,16 +494,52 @@ async function recharge(phoneNo, password, balance) {
             throw new Error('Invalid password!');
         }
 
-        // 3. FIXED LOGIC: 1 trial = 3 Birr. If balance is 10 Birr, they get 3 trials (Floor division).
         const amount = parseFloat(balance);
-        if (isNaN(amount) || amount <= 0) {
+        if (isNaN(amount) || amount <= 0 || amount%25 != 0) {
             throw new Error("Invalid deposit amount!");
         }
         
-        let trials = Math.floor(amount / 3); 
+        // 3. FIXED PACKAGE LOGIC: 25 Br = 3 trials, 50 Br = 6 trials, 75 Br = 9 trials...
+        let trials = Math.floor(amount / 25) * 3; 
+        
 
-        // 4. Update the database cleanly
-        await sql`UPDATE users SET balance = balance + ${amount}, trials = trials + ${trials} WHERE id = ${user.id}`;
+        // 4. GENERATE ETHIOPIAN SYSTEM DATES
+        // Use a trusted external anchor fallback framework similar to your helper
+        let trueTimestamp = Date.now();
+        try {
+            let response = await fetch('https://cloudflare.com/cdn-cgi/trace');
+            let text = await response.text();
+            let tsLine = text.split('\n').find(line => line.startsWith('ts='));
+            if (tsLine) {
+                trueTimestamp = parseFloat(tsLine.split('=')[1]) * 1000;
+            }
+        } catch (e) {
+            console.log("Cloudflare sync failed during recharge transaction, utilizing server backup time.");
+        }
+
+        let today = new Date(trueTimestamp);
+        let expiryDate = new Date(trueTimestamp);
+        expiryDate.setDate(today.getDate() + 1); // Sets expiration 1 day later
+
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Africa/Addis_Ababa',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+
+        const formattedToday = formatter.format(today);
+        const formattedExpiry = formatter.format(expiryDate);
+
+        // 5. UPDATE THE DATABASE WITH RECHAGED_ON AND EXPIRY_DATE
+        await sql`
+            UPDATE users 
+            SET balance = balance + ${amount}, 
+                trials = trials + ${trials},
+                recharged_on = ${formattedToday},
+                expiry_date = ${formattedExpiry} 
+            WHERE id = ${user.id}
+        `;
         
         return true;
     }
